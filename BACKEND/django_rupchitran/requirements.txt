@@ -1,0 +1,13 @@
+django
+djangorestframework
+django-cors-headers
+pillow
+drf-extra-fields
+psycopg2-binary
+tensorflow
+keras
+numpy
+opencv-python
+scikit-learn
+keras_facenet
+pickle4
