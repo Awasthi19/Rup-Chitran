@@ -13,4 +13,5 @@ urlpatterns = [
     path('facedetect/', FaceDetectView.as_view(), name='face_detect'),
     path("create_course/", TeacherCourseStudentView.as_view(), name="create_course"),
     path('', include(router.urls)),
+    path('courses/', CourseView.as_view(), name='courses'),
 ]
