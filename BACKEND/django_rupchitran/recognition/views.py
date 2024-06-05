@@ -58,6 +58,20 @@ class FaceDetectView(APIView):
         box = face_detect_crop_save(latest_image.image.path)
         return Response(box)
     
+class CourseView(APIView):
+    
+        def get(self, request):
+            teacher_name = request.data.get('teacher')
+            teacher = Teacher.objects.get(teacherName=teacher_name)
+            teacher_id = teacher.id
+            courses = Course.objects.filter(teacher=teacher_id)
+            data = []
+            for course in courses:
+                data.append({
+                    'course_name': course.courseName,
+                })
+            return Response(data)
+    
 
     
     

@@ -5,7 +5,6 @@ from rest_framework.request import Request
 from rest_framework import status
 from django.contrib.auth.hashers import make_password, check_password
 import datetime
-import jwt
 
 class SignupView(APIView):
     permission_classes = []
