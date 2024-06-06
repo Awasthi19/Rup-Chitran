@@ -5,6 +5,9 @@ from rest_framework.request import Request
 from rest_framework import status
 from django.contrib.auth.hashers import make_password, check_password
 import datetime
+import jwt
+from django.conf import settings
+
 
 class SignupView(APIView):
     permission_classes = []
@@ -59,14 +62,17 @@ class LoginView(APIView):
             'exp': expiration,
             'iat': now
         }
-        
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
+        try:
+            token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        except Exception as e:
+            return Response({'message': f'Error encoding token: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         response = Response({'jwt': token}, status=status.HTTP_200_OK)
         response.set_cookie(key='jwt', value=token, httponly=True)
         
-        return response  
-
+        return response
+        
 class ProfileView(APIView):
     permission_classes = []
     authentication_classes = []

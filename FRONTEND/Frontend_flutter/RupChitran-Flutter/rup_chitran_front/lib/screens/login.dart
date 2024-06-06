@@ -22,7 +22,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _hasPasswordError = false;
   bool _completed = false;
 
-  void Login() async {
+void Login() async {
   setState(() {
     _completed = true;
   });
@@ -52,20 +52,22 @@ class _LoginPageState extends State<LoginPage> {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = jsonDecode(response.body);
-      final String token = responseBody['token'];
 
-      // // Save token to SharedPreferences
-      // final prefs = await SharedPreferences.getInstance();
-      // await prefs.setString('jwt_token', token);
+      // Check if the token is null
+      if (responseBody.containsKey('jwt') && responseBody['jwt'] != null) {
+        final String token = responseBody['jwt'];
 
-      setState(() {
-        _hasEmailError = false;
-        _hasPasswordError = false;
-        _completed = false;
-      });
+        setState(() {
+          _hasEmailError = false;
+          _hasPasswordError = false;
+          _completed = false;
+        });
 
-      // Navigate to the next page or show a success message
-      Navigator.pushNamed(context, 'home');
+        // Navigate to the next page or show a success message
+        Navigator.pushNamed(context, 'home');
+      } else {
+        showErrorDialog(context, err: 'An unknown error occurred: Invalid response format');
+      }
     } else if (response.statusCode == 400) {
       showErrorDialog(context, err: 'Email and password are required');
     } else if (response.statusCode == 404) {
