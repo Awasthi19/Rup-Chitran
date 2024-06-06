@@ -49,7 +49,6 @@ class LoginView(APIView):
         if not check_password(password, user.password):
             return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        """
         now = datetime.datetime.now(datetime.timezone.utc)
         expiration = now + datetime.timedelta(minutes=60)
 
@@ -61,15 +60,12 @@ class LoginView(APIView):
             'iat': now
         }
         
-        
         token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
         
         response = Response({'jwt': token}, status=status.HTTP_200_OK)
         response.set_cookie(key='jwt', value=token, httponly=True)
-
-        """
         
-        return Response({'message': 'Logged in'}, status=status.HTTP_200_OK)
+        return response  
 
 class ProfileView(APIView):
     permission_classes = []
