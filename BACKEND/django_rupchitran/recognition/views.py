@@ -6,8 +6,8 @@ from .models import *
 from .facecrop import face_detect_crop_save
 from rest_framework.viewsets import ModelViewSet
 from .serializers import ImageSerializer
-from BACKEND.FaceNet.detect import recognize_faces
-from BACKEND.Emotion.emotion import recognize_emotion
+from .detect import recognize_faces
+from .emotion import recognize_emotion
 import jwt
 
 class ImageViewSet(ModelViewSet):
@@ -30,32 +30,28 @@ class EmotionRecognitionView(APIView):
           
         
 class CourseView(APIView):
-    
-    def get(self, request):
-        token = request.GET.get('jwt',None)
-        print(token)
-        if not token:
-            print("Not authenticated")
-            return Response({'error': 'Not authenticated'})
-        try:
-            print("Decoding token")
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-            print("Payload")
-            print(payload)
-        except jwt.ExpiredSignatureError:
-            return Response({'error': 'Token expired'})
-        except jwt.InvalidTokenError as e:
-            print("Invalid Token Error:", e) 
-            return Response({'error': 'Invalid token'})
-        teacher = Teacher.objects.get(id=payload['id'])
-        teacher_id = teacher.id
-        courses = Course.objects.filter(teacher=teacher_id)
-        data = []
-        for course in courses:
-            data.append({
-                'course_name': course.courseName,
-            })
-        return Response(data)
+  
+  def get(self, request):
+      token = request.GET.get('jwt', None)
+      if not token:
+          return Response({'error': 'Not authenticated'}, status=401)
+      
+      try:
+          payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+      except jwt.ExpiredSignatureError:
+          return Response({'error': 'Token expired'}, status=401)
+      except jwt.InvalidTokenError:
+          return Response({'error': 'Invalid token'}, status=401)
+      teacher = Teacher.objects.get(id=payload['id'])
+      teacher_id = teacher.id
+      courses = Course.objects.filter(teacher=teacher_id)
+      data = []
+      for course in courses:
+          data.append({
+              'course_name': course.courseName,
+          })
+      return Response({'courses': data}, status=200)
+
 
 class TeacherCourseStudentView(APIView):
     

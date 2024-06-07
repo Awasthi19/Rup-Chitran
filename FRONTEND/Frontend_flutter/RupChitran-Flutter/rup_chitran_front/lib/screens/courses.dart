@@ -35,7 +35,7 @@ class _CoursePageState extends State<CoursePage> {
       return;
     }
 
-    var url = Uri.http('127.0.0.1:8000', '/profile/', {'jwt': token});
+    var url = Uri.http('127.0.0.1:8000', '/courses/', {'jwt': token});
     try {
       var response = await http.get(url);
 
