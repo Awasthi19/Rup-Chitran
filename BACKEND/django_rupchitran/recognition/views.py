@@ -3,14 +3,44 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .face_detection import *
 from .models import *
-from datetime import date
 from .facecrop import face_detect_crop_save
 from rest_framework.viewsets import ModelViewSet
 from .serializers import ImageSerializer
+from BACKEND.FaceNet.detect import recognize_faces
+from BACKEND.Emotion.emotion import recognize_emotion
 
 class ImageViewSet(ModelViewSet):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
+
+class FaceRecognitionView(APIView):
+        
+        def get(self, request):
+            latest_image = Image.objects.latest('uploaded_at')
+            data = recognize_faces(latest_image.image.path)
+            return Response(data)
+        
+class EmotionRecognitionView(APIView):
+     
+     def get(self,request):
+        latest_image = Image.objects.latest('uploaded_at')
+        data = recognize_emotion(latest_image.image.path)
+        return Response(data)
+          
+        
+class CourseView(APIView):
+    
+    def get(self, request):
+        teacher_name = request.data.get('teacher')
+        teacher = Teacher.objects.get(teacherName=teacher_name)
+        teacher_id = teacher.id
+        courses = Course.objects.filter(teacher=teacher_id)
+        data = []
+        for course in courses:
+            data.append({
+                'course_name': course.courseName,
+            })
+        return Response(data)
 
 class TeacherCourseStudentView(APIView):
     
@@ -29,48 +59,10 @@ class TeacherCourseStudentView(APIView):
             course.students.add(student_obj)
         return Response('Course and Students added successfully')
 
-class FaceDetectView1(APIView):
+    
 
-    def get(self, request):
-        latest_image = Image.objects.latest('uploaded_at')
-        box = detect_faces(latest_image.image.path)
-        DetectedFaces = face_recognizer(latest_image.image.path)
-
-        course = Course.objects.get(id=request.data.get('course_id'))
-        today = date.today()
         
-        for face in DetectedFaces:
-            student = Student.objects.filter(studentName=face).first()
-            if student:
-                Attendance.objects.update_or_create(
-                    course=course,
-                    date=today,
-                    students=student,
-                    defaults={'Status': True}
-                )
-            
-        return Response(box)
-    
-class FaceDetectView(APIView):
 
-    def get(self, request):
-        latest_image = Image.objects.latest('uploaded_at')
-        box = face_detect_crop_save(latest_image.image.path)
-        return Response(box)
-    
-class CourseView(APIView):
-    
-        def get(self, request):
-            teacher_name = request.data.get('teacher')
-            teacher = Teacher.objects.get(teacherName=teacher_name)
-            teacher_id = teacher.id
-            courses = Course.objects.filter(teacher=teacher_id)
-            data = []
-            for course in courses:
-                data.append({
-                    'course_name': course.courseName,
-                })
-            return Response(data)
     
 
     
