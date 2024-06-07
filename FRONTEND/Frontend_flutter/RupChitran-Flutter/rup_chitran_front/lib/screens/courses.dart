@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:rup_chitran_front/screens/image_sender.dart';
+import 'package:rup_chitran_front/screens/login.dart'; // Ensure this import exists
 import 'dart:convert';
-import 'package:rup_chitran_front/screens/student.dart'; // Import the StudentPage
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rup_chitran_front/constants/constant.dart';
 
-// Main widget for displaying courses
 class CoursePage extends StatefulWidget {
   static String id = 'course';
 
@@ -12,7 +13,6 @@ class CoursePage extends StatefulWidget {
   _CoursePageState createState() => _CoursePageState();
 }
 
-// State class for CoursePage
 class _CoursePageState extends State<CoursePage> {
   List _courses = [];
   bool _isLoading = true;
@@ -20,46 +20,42 @@ class _CoursePageState extends State<CoursePage> {
   @override
   void initState() {
     super.initState();
-    _fetchCourses();
+    fetchUserProfile();
   }
 
-  // Method to fetch courses from the API
-  Future<void> _fetchCourses() async {
-    // Replace with your actual API URL
-    var url = Uri.parse('http://example.com/api/courses');
-    var response = await http.get(url);
+  void fetchUserProfile() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('jwt');
 
-    if (response.statusCode == 200) {
-      setState(() {
-        _courses = json.decode(response.body);
-        _isLoading = false;
-      });
-    } else {
+    if (token == null) {
       setState(() {
         _isLoading = false;
       });
-      showErrorDialog(context,err: 'Failed to load courses');
+      showErrorDialog(context, err: 'No token found. Please log in.');
+      return;
     }
-  }
 
-  // Method to show error dialog
+    var url = Uri.http('127.0.0.1:8000', '/profile/', {'jwt': token});
+    try {
+      var response = await http.get(url);
 
-
-  // Method to navigate to the StudentPage
-  void _navigateToStudents(int courseId) async{
-    var Url=Uri.parse('http://example.com/api/students');
-   var response = await http.post(Url,
-        body: {'courseId':courseId});
-    if (response.statusCode == 200) {
-      print(response.statusCode);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Student(courseId: courseId),
-      ),
-    );
-    } else {
-      showErrorDialog(context,err:'${response.statusCode} Failed to load students');
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = jsonDecode(response.body);
+        setState(() {
+          _courses = responseBody['courses'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        showErrorDialog(context, err: 'Failed to load user profile: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      showErrorDialog(context, err: 'An error occurred: $e');
     }
   }
 
@@ -68,6 +64,14 @@ class _CoursePageState extends State<CoursePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Courses'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.arrow_forward),
+            onPressed: () {
+              Navigator.pushNamed(context, LoginPage.id);
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
@@ -77,9 +81,9 @@ class _CoursePageState extends State<CoursePage> {
                 return Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                   child: ElevatedButton(
-                    onPressed: () => _navigateToStudents(_courses[index]['id']),
+                    onPressed: () => Navigator.pushNamed(context, CameraPage.id),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue, // Background color
+                      backgroundColor: Colors.blue,
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),

@@ -6,10 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' as ui;
 import 'package:flutter/widgets.dart' as widgets;
-
+import 'package:rup_chitran_front/screens/courses.dart';
+import 'package:rup_chitran_front/screens/login.dart';
 
 class CameraPage extends StatefulWidget {
-  static String id='CameraPage';
+  static String id = 'CameraPage';
   @override
   _CameraPageState createState() => _CameraPageState();
 }
@@ -29,7 +30,8 @@ class _CameraPageState extends State<CameraPage> {
 
   void _initializeCamera() {
     _videoElement = html.VideoElement();
-    html.window.navigator.mediaDevices!.getUserMedia({'video': true}).then((stream) {
+    html.window.navigator.mediaDevices!
+        .getUserMedia({'video': true}).then((stream) {
       _videoElement!.srcObject = stream;
       _videoElement!.play();
     }).catchError((e) {
@@ -40,7 +42,9 @@ class _CameraPageState extends State<CameraPage> {
   Future<void> _captureImage() async {
     if (_isDetecting) {
       try {
-        final canvas = html.CanvasElement(width: _videoElement!.videoWidth, height: _videoElement!.videoHeight);
+        final canvas = html.CanvasElement(
+            width: _videoElement!.videoWidth,
+            height: _videoElement!.videoHeight);
         final ctx = canvas.context2D;
         ctx.drawImage(_videoElement!, 0, 0);
         final blob = await canvas.toBlob('image/png');
@@ -69,7 +73,8 @@ class _CameraPageState extends State<CameraPage> {
       await reader.onLoad.first;
 
       final bytes = reader.result as Uint8List;
-      final multipartFile = http.MultipartFile.fromBytes('image', bytes, filename: imageFile.name);
+      final multipartFile = http.MultipartFile.fromBytes('image', bytes,
+          filename: imageFile.name);
       request.files.add(multipartFile);
 
       final response = await request.send();
@@ -79,7 +84,8 @@ class _CameraPageState extends State<CameraPage> {
           _queue.remove(imageFile);
         });
       } else {
-        print('Image post failed with status: ${response.statusCode} for image: ${imageFile.name}');
+        print(
+            'Image post failed with status: ${response.statusCode} for image: ${imageFile.name}');
       }
     } catch (e) {
       print('Image post failed with error: $e for image: ${imageFile.name}');
@@ -121,7 +127,17 @@ class _CameraPageState extends State<CameraPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Camera Page')),
+      appBar: AppBar(
+        title: Text('Camera Page'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.arrow_forward),
+            onPressed: () {
+              Navigator.pushNamed(context, LoginPage.id);
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           ElevatedButton(

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:rup_chitran_front/screens/courses.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:rup_chitran_front/screens/signup.dart';
@@ -49,13 +50,18 @@ void Login() async {
 
     print('Response status: ${response.statusCode}');
     print('Response body: ${response.body}');
+    
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = jsonDecode(response.body);
 
-      // Check if the token is null
+      // Checking if the token is null
       if (responseBody.containsKey('jwt') && responseBody['jwt'] != null) {
         final String token = responseBody['jwt'];
+        // saving the response to shared preferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwt', token);
+        print('token: $token');
 
         setState(() {
           _hasEmailError = false;
@@ -64,7 +70,7 @@ void Login() async {
         });
 
         // Navigate to the next page or show a success message
-        Navigator.pushNamed(context, 'home');
+        Navigator.pushNamed(context, CoursePage.id);
       } else {
         showErrorDialog(context, err: 'An unknown error occurred: Invalid response format');
       }

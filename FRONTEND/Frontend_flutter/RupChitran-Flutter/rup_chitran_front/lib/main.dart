@@ -17,6 +17,7 @@ void main() {
       CoursePage.id: (context) => CoursePage(),
       Student.id: (context) => Student(),
       CameraPage.id: (context) => CameraPage(),
+      
     },
   ));
 }
