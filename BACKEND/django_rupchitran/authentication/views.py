@@ -5,6 +5,9 @@ from rest_framework.request import Request
 from rest_framework import status
 from django.contrib.auth.hashers import make_password, check_password
 import datetime
+import jwt
+from django.conf import settings
+
 
 class SignupView(APIView):
     permission_classes = []
@@ -49,7 +52,6 @@ class LoginView(APIView):
         if not check_password(password, user.password):
             return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        """
         now = datetime.datetime.now(datetime.timezone.utc)
         expiration = now + datetime.timedelta(minutes=60)
 
@@ -60,28 +62,28 @@ class LoginView(APIView):
             'exp': expiration,
             'iat': now
         }
-        
-        
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
+        try:
+            token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        except Exception as e:
+            return Response({'message': f'Error encoding token: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         response = Response({'jwt': token}, status=status.HTTP_200_OK)
         response.set_cookie(key='jwt', value=token, httponly=True)
-
-        """
         
-        return Response({'message': 'Logged in'}, status=status.HTTP_200_OK)
-
+        return response
+        
 class ProfileView(APIView):
     permission_classes = []
     authentication_classes = []
 
     def get(self, request):
-        token = request.GET.get('jwt',None)
+        token = request.GET.get('jwt', None)
         print(token)
 
         if not token:
             print("Not authenticated")
-            return Response({'error': 'Not authenticated'})
+            return Response({'error': 'Not authenticated'}, status=401)
         
         try:
             print("Decoding token")
@@ -89,19 +91,26 @@ class ProfileView(APIView):
             print("Payload")
             print(payload)
         except jwt.ExpiredSignatureError:
-            return Response({'error': 'Token expired'})
+            return Response({'error': 'Token expired'}, status=401)
         except jwt.InvalidTokenError as e:
             print("Invalid Token Error:", e) 
-            return Response({'error': 'Invalid token'})
+            return Response({'error': 'Invalid token'}, status=401)
         
-        user = Users.objects.get(id=payload['id'])
-        user_data = {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-        }
-        return Response(user_data)
-    
+        try:
+            user = Users.objects.get(id=payload['id'])
+            courses = Course.objects.filter(user=user)  # Assuming a ForeignKey relationship
+            course_data = [{'id': course.id, 'title': course.title, 'description': course.description} for course in courses]
+
+            response_data = {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'courses': course_data
+            }
+            return Response(response_data)
+        except Users.DoesNotExist:
+            return Response({'error': 'User not found'}, status=404)
+
 class LogoutView(APIView):
     permission_classes = []
     authentication_classes = []
@@ -112,5 +121,3 @@ class LogoutView(APIView):
         response.data = {
             'message': 'logged out'
         }
-        return response
-    

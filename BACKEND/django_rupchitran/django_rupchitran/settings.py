@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-_x*48i^6uss5-9c_edr@i=h(15awwhx45a$b7z#&#b3b%@xg!j'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -54,7 +54,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:3000']
+CORS_ORIGIN_ALLOW_ALL = True
 
 
 ROOT_URLCONF = 'django_rupchitran.urls'

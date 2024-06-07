@@ -8,6 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from .serializers import ImageSerializer
 from BACKEND.FaceNet.detect import recognize_faces
 from BACKEND.Emotion.emotion import recognize_emotion
+import jwt
 
 class ImageViewSet(ModelViewSet):
     queryset = Image.objects.all()
@@ -31,8 +32,22 @@ class EmotionRecognitionView(APIView):
 class CourseView(APIView):
     
     def get(self, request):
-        teacher_name = request.data.get('teacher')
-        teacher = Teacher.objects.get(teacherName=teacher_name)
+        token = request.GET.get('jwt',None)
+        print(token)
+        if not token:
+            print("Not authenticated")
+            return Response({'error': 'Not authenticated'})
+        try:
+            print("Decoding token")
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+            print("Payload")
+            print(payload)
+        except jwt.ExpiredSignatureError:
+            return Response({'error': 'Token expired'})
+        except jwt.InvalidTokenError as e:
+            print("Invalid Token Error:", e) 
+            return Response({'error': 'Invalid token'})
+        teacher = Teacher.objects.get(id=payload['id'])
         teacher_id = teacher.id
         courses = Course.objects.filter(teacher=teacher_id)
         data = []
@@ -61,18 +76,4 @@ class TeacherCourseStudentView(APIView):
 
     
 
-        
-
-    
-
-    
-    
-
-        
-
-        
-
-
-
-
-        
+ 
