@@ -30,27 +30,39 @@ class EmotionRecognitionView(APIView):
           
         
 class CourseView(APIView):
+
+    def post(self, request):
+        try:
+            course = Course.objects.create(
+                courseName=request.data.get('courseName'),
+                teacher_id=request.data.get('teacher_id')
+            )
+            return Response('Course and Students added successfully', status=200)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
   
-  def get(self, request):
-      token = request.GET.get('jwt', None)
-      if not token:
-          return Response({'error': 'Not authenticated'}, status=401)
-      
-      try:
-          payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-      except jwt.ExpiredSignatureError:
-          return Response({'error': 'Token expired'}, status=401)
-      except jwt.InvalidTokenError:
-          return Response({'error': 'Invalid token'}, status=401)
-      teacher = Teacher.objects.get(id=payload['id'])
-      teacher_id = teacher.id
-      courses = Course.objects.filter(teacher=teacher_id)
-      data = []
-      for course in courses:
-          data.append({
-              'course_name': course.courseName,
-          })
-      return Response({'courses': data}, status=200)
+    def get(self, request):
+        token = request.headers.get('Authorization')
+        print(token)
+        if not token:
+            return Response({'error': 'Not authenticated'}, status=401)
+        
+        try:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return Response({'error': 'Token expired'}, status=401)
+        except jwt.InvalidTokenError:
+            return Response({'error': 'Invalid token'}, status=401)
+        print(token)
+        teacher = Teacher.objects.get(id=payload['id'])
+        teacher_id = teacher.id
+        courses = Course.objects.filter(teacher=teacher_id)
+        data = []
+        for course in courses:
+            data.append({
+                'course_name': course.courseName,
+            })
+        return Response({'courses': data}, status=200)
 
 
 class TeacherCourseStudentView(APIView):

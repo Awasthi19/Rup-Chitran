@@ -35,9 +35,14 @@ class _CoursePageState extends State<CoursePage> {
       return;
     }
 
-    var url = Uri.http('127.0.0.1:8000', '/courses/', {'jwt': token});
+    var url = Uri.http('127.0.0.1:8000', '/courses/');
     try {
-      var response = await http.get(url);
+      var response = await http.get(
+      url,
+      headers: {
+        'Authorization': '$token',
+      },
+    );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
