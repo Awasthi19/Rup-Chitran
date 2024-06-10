@@ -23,7 +23,7 @@ class Teacher(models.Model):
 class Course(models.Model):
     courseName = models.CharField(max_length=100)
     teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE, related_name='courses')
-    students = models.ManyToManyField('Student', related_name='courses')
+    students = models.ManyToManyField('Student', related_name='courses', blank=True, null=True, default=None, related_query_name='course')
     def __str__(self):
         return self.courseName
 

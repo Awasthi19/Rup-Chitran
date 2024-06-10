@@ -1,5 +1,5 @@
 from rest_framework.views import APIView
-from .models import Users
+from .models import Teacher
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import make_password, check_password
 import datetime
 import jwt
 from django.conf import settings
+from .models import *
 
 
 class SignupView(APIView):
@@ -22,11 +23,11 @@ class SignupView(APIView):
             if not username or not email or not password:
                 return Response({'message': 'Please fill all the fields'}, status=status.HTTP_400_BAD_REQUEST)
 
-            if Users.objects.filter(email=email).exists():
+            if Teacher.objects.filter(email=email).exists():
                 return Response({'message': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
             hashed_password = make_password(password)
-            user = Users(username=username, email=email, password=hashed_password)
+            user = Teacher(teacherName=username, email=email, password=hashed_password)
             user.save()
 
             return Response({'message': 'User created'}, status=status.HTTP_201_CREATED)
@@ -45,8 +46,8 @@ class LoginView(APIView):
             return Response({'message': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = Users.objects.get(email=email)
-        except Users.DoesNotExist:
+            user = Teacher.objects.get(email=email)
+        except Teacher.DoesNotExist:
             return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
         if not check_password(password, user.password):
@@ -97,7 +98,7 @@ class ProfileView(APIView):
             return Response({'error': 'Invalid token'}, status=401)
         
         try:
-            user = Users.objects.get(id=payload['id'])
+            user = Teacher.objects.get(id=payload['id'])
             courses = Course.objects.filter(user=user)  # Assuming a ForeignKey relationship
             course_data = [{'id': course.id, 'title': course.title, 'description': course.description} for course in courses]
 
@@ -108,7 +109,7 @@ class ProfileView(APIView):
                 'courses': course_data
             }
             return Response(response_data)
-        except Users.DoesNotExist:
+        except Teacher.DoesNotExist:
             return Response({'error': 'User not found'}, status=404)
 
 class LogoutView(APIView):
