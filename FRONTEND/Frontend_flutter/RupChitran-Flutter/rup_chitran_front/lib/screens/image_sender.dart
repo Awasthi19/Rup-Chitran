@@ -1,12 +1,9 @@
 import 'dart:async';
 import 'dart:html' as html;
 import 'dart:typed_data';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/services.dart' as ui;
-import 'package:flutter/widgets.dart' as widgets;
-import 'package:rup_chitran_front/screens/courses.dart';
 import 'package:rup_chitran_front/screens/login.dart';
 
 class CameraPage extends StatefulWidget {
@@ -28,9 +25,9 @@ class _CameraPageState extends State<CameraPage> {
     _initializeCamera();
   }
 
-  void _initializeCamera() {
+  void _initializeCamera() async {
     _videoElement = html.VideoElement();
-    html.window.navigator.mediaDevices!
+    await html.window.navigator.mediaDevices!
         .getUserMedia({'video': true}).then((stream) {
       _videoElement!.srcObject = stream;
       _videoElement!.play();
@@ -58,39 +55,42 @@ class _CameraPageState extends State<CameraPage> {
         print('Image captured: ${imageFile.name}');
         _processQueue();
       } catch (e) {
-        print(e);
+        print('Error capturing image: ${e.toString()}');
       }
     }
   }
 
-  Future<void> _postImage(html.File imageFile) async {
-    try {
-      final uri = Uri.parse('YOUR_IMAGE_POST_URL_HERE');
-      final request = http.MultipartRequest('POST', uri);
+ Future<void> _postImage(html.File imageFile) async {
+  try {
+    final uri = Uri.parse('http://127.0.0.1:8000/images/');
 
-      final reader = html.FileReader();
-      reader.readAsArrayBuffer(imageFile);
-      await reader.onLoad.first;
+    // Convert the image file to base64
+    String base64Image = await _convertToBase64(imageFile);
 
-      final bytes = reader.result as Uint8List;
-      final multipartFile = http.MultipartFile.fromBytes('image', bytes,
-          filename: imageFile.name);
-      request.files.add(multipartFile);
+    // Create the request body
+    var body = jsonEncode({'image': base64Image});
 
-      final response = await request.send();
-      if (response.statusCode == 200) {
-        print('Image posted successfully: ${imageFile.name}');
-        setState(() {
-          _queue.remove(imageFile);
-        });
-      } else {
-        print(
-            'Image post failed with status: ${response.statusCode} for image: ${imageFile.name}');
-      }
-    } catch (e) {
-      print('Image post failed with error: $e for image: ${imageFile.name}');
+    // Send the POST request
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      // Both 200 and 201 are treated as success
+      print('Image posted successfully: ${imageFile.name}');
+      setState(() {
+        _queue.remove(imageFile);
+      });
+    } else {
+      print(
+          'Image post failed with status: ${response.statusCode} for image: ${imageFile.name}');
     }
+  } catch (e) {
+    print('Image post failed with error: ${e.toString()} for image: ${imageFile.name}');
   }
+}
 
   void _processQueue() {
     for (var imageFile in _queue) {
@@ -117,11 +117,12 @@ class _CameraPageState extends State<CameraPage> {
     });
   }
 
-  Future<String> _convertToDataUrl(html.File imageFile) async {
+  Future<String> _convertToBase64(html.File imageFile) async {
     final reader = html.FileReader();
-    reader.readAsDataUrl(imageFile);
+    reader.readAsArrayBuffer(imageFile);
     await reader.onLoad.first;
-    return reader.result as String;
+    final Uint8List bytes = reader.result as Uint8List;
+    return base64Encode(bytes);
   }
 
   @override
@@ -149,57 +150,7 @@ class _CameraPageState extends State<CameraPage> {
               child: HtmlElementView(viewType: 'videoElement'),
               height: 300,
             ),
-          // Comment out or remove the ListView.builder
-          // Expanded(
-          //   child: ListView.builder(
-          //     itemCount: _imageFiles.length,
-          //     itemBuilder: (context, index) {
-          //       return FutureBuilder<String>(
-          //         future: _convertToDataUrl(_imageFiles[index]),
-          //         builder: (context, snapshot) {
-          //           if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-          //             return ListTile(
-          //               title: Text('Image ${index + 1}'),
-          //               subtitle: Text(_imageFiles[index].name),
-          //               onTap: () {
-          //                 Navigator.push(
-          //                   context,
-          //                   MaterialPageRoute(
-          //                     builder: (context) => ImageDisplayPage(imageDataUrl: snapshot.data!),
-          //                   ),
-          //                 );
-          //               },
-          //               leading: Image.network(snapshot.data!),
-          //             );
-          //           } else {
-          //             return ListTile(
-          //               title: Text('Image ${index + 1}'),
-          //               subtitle: Text('Loading...'),
-          //             );
-          //           }
-          //         },
-          //       );
-          //     },
-          //   ),
-          // ),
         ],
-      ),
-    );
-  }
-}
-
-// The ImageDisplayPage class remains the same, but you can also remove it if it's not needed anymore
-class ImageDisplayPage extends StatelessWidget {
-  final String imageDataUrl;
-
-  ImageDisplayPage({required this.imageDataUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Image Display')),
-      body: Center(
-        child: Image.network(imageDataUrl),
       ),
     );
   }
