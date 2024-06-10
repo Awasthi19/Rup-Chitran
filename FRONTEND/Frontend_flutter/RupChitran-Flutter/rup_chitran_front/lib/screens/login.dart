@@ -1,8 +1,10 @@
 import 'dart:convert';
+
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:rup_chitran_front/screens/courses.dart';
+import 'package:rup_chitran_front/screens/image_sender.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:rup_chitran_front/screens/signup.dart';
@@ -23,84 +25,84 @@ class _LoginPageState extends State<LoginPage> {
   bool _hasPasswordError = false;
   bool _completed = false;
 
-void Login() async {
-  setState(() {
-    _completed = true;
-  });
+  void Login() async {
+    setState(() {
+      _completed = true;
+    });
 
-  String email = _loginEmailController.text.trim();
-  String password = _loginPasswordController.text.trim();
-  print('Email: $email, Password: $password,');
+    String email = _loginEmailController.text.trim();
+    String password = _loginPasswordController.text.trim();
+    print('Email: $email, Password: $password,');
 
-  if (email.isEmpty || password.isEmpty) {
-    showErrorDialog(context, err: 'Please fill all the fields');
+    if (email.isEmpty || password.isEmpty) {
+      showErrorDialog(context, err: 'Please fill all the fields');
+      setState(() {
+        _completed = false;
+      });
+      return;
+    }
+
+    var url = Uri.http('127.0.0.1:8000', '/login/');
+    try {
+      var response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = jsonDecode(response.body);
+
+        // Checking if the token is null
+        if (responseBody.containsKey('jwt') && responseBody['jwt'] != null) {
+          final String token = responseBody['jwt'];
+          // saving the response to shared preferences
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('jwt', token);
+          print('token: $token');
+
+          setState(() {
+            _hasEmailError = false;
+            _hasPasswordError = false;
+            _completed = false;
+          });
+
+          // Navigate to the next page or show a success message
+          // Navigator.pushNamed(context, CoursePage.id);
+          Navigator.pushNamed(context, CameraPage.id);
+        } else {
+          showErrorDialog(context,
+              err: 'An unknown error occurred: Invalid response format');
+        }
+      } else if (response.statusCode == 400) {
+        showErrorDialog(context, err: 'Email and password are required');
+      } else if (response.statusCode == 404) {
+        setState(() {
+          _hasEmailError = true;
+        });
+        showErrorDialog(context, err: 'User not found');
+      } else if (response.statusCode == 401) {
+        setState(() {
+          _hasPasswordError = true;
+        });
+        showErrorDialog(context, err: 'Invalid credentials');
+      } else {
+        showErrorDialog(context, err: 'An unknown error occurred');
+      }
+
+      _loginEmailController.clear();
+      _loginPasswordController.clear();
+    } catch (e) {
+      showErrorDialog(context, err: 'An error occurred: $e');
+    }
+
     setState(() {
       _completed = false;
     });
-    return;
   }
-
-  var url = Uri.http('127.0.0.1:8000', '/login/');
-  try {
-    var response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-    
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseBody = jsonDecode(response.body);
-
-      // Checking if the token is null
-      if (responseBody.containsKey('jwt') && responseBody['jwt'] != null) {
-        final String token = responseBody['jwt'];
-        // saving the response to shared preferences
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt', token);
-        print('token: $token');
-
-        setState(() {
-          _hasEmailError = false;
-          _hasPasswordError = false;
-          _completed = false;
-        });
-
-        // Navigate to the next page or show a success message
-        Navigator.pushNamed(context, CoursePage.id);
-      } else {
-        showErrorDialog(context, err: 'An unknown error occurred: Invalid response format');
-      }
-    } else if (response.statusCode == 400) {
-      showErrorDialog(context, err: 'Email and password are required');
-    } else if (response.statusCode == 404) {
-      setState(() {
-        _hasEmailError = true;
-      });
-      showErrorDialog(context, err: 'User not found');
-    } else if (response.statusCode == 401) {
-      setState(() {
-        _hasPasswordError = true;
-      });
-      showErrorDialog(context, err: 'Invalid credentials');
-    } else {
-      showErrorDialog(context, err: 'An unknown error occurred');
-    }
-
-    _loginEmailController.clear();
-    _loginPasswordController.clear();
-  } catch (e) {
-    showErrorDialog(context, err: 'An error occurred: $e');
-  }
-
-  setState(() {
-    _completed = false;
-  });
-}
-
 
   @override
   void dispose() {
@@ -135,7 +137,7 @@ void Login() async {
           child: Container(
             height: MediaQuery.of(context).size.height,
             width: double.infinity,
-            child: Column( 
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Expanded(

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:rup_chitran_front/screens/image_sender.dart';
 import 'package:rup_chitran_front/screens/login.dart'; // Ensure this import exists
+import 'package:rup_chitran_front/screens/student.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rup_chitran_front/constants/constant.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 
 class CoursePage extends StatefulWidget {
   static String id = 'course';
@@ -38,11 +41,11 @@ class _CoursePageState extends State<CoursePage> {
     var url = Uri.http('127.0.0.1:8000', '/courses/');
     try {
       var response = await http.get(
-      url,
-      headers: {
-        'Authorization': '$token',
-      },
-    );
+        url,
+        headers: {
+          'Authorization': '$token',
+        },
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
@@ -54,7 +57,8 @@ class _CoursePageState extends State<CoursePage> {
         setState(() {
           _isLoading = false;
         });
-        showErrorDialog(context, err: 'Failed to load user profile: ${response.statusCode}');
+        showErrorDialog(context,
+            err: 'Failed to load user profile: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
@@ -84,9 +88,24 @@ class _CoursePageState extends State<CoursePage> {
               itemCount: _courses.length,
               itemBuilder: (context, index) {
                 return Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  padding:
+                      EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, CameraPage.id),
+                    onPressed: () {
+                      if (kIsWeb) {
+                        Navigator.pushNamed(context, CameraPage.id);
+                        print('Running on the web');
+                      } else {
+                        if (Platform.isAndroid) {
+                          Navigator.pushNamed(context, Student.id);
+                          print('Running on Android');
+                        } else if (Platform.isIOS) {
+                          print('Running on iOS');
+                        } else {
+                          print('Running on an unknown platform');
+                        }
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                     ),
