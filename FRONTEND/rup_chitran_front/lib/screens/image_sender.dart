@@ -1,54 +1,61 @@
 import 'dart:async';
-import 'dart:html' as html;
-import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
 import 'package:http/http.dart' as http;
+import 'dart:html' as html;
 import 'package:rup_chitran_front/screens/login.dart';
 
 class CameraPage extends StatefulWidget {
   static String id = 'CameraPage';
-  CameraPage({this.courseName}) {}
+  CameraPage({ this.courseName}) {}
 
   final String? courseName;
+
   @override
   _CameraPageState createState() => _CameraPageState();
 }
 
 class _CameraPageState extends State<CameraPage> {
   bool _isDetecting = false;
+  bool _cameraInitialized = false;
   List<html.File> _imageFiles = [];
   List<html.File> _queue = [];
+  CameraController? _controller;
+  Future<void>? _initializeControllerFuture;
 
-  html.VideoElement? _videoElement;
+  Future<void> _initializeCamera() async {
+    try {
+      final cameras = await availableCameras();
+      final firstCamera = cameras.first;
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeCamera();
-  }
+      _controller = CameraController(
+        firstCamera,
+        ResolutionPreset.high,
+      );
 
-  void _initializeCamera() async {
-    _videoElement = html.VideoElement();
-    await html.window.navigator.mediaDevices!
-        .getUserMedia({'video': true}).then((stream) {
-      _videoElement!.srcObject = stream;
-      _videoElement!.play();
-    }).catchError((e) {
-      print('Error accessing camera: $e');
-    });
+      _initializeControllerFuture = _controller!.initialize().then((_) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _cameraInitialized = true;
+        });
+      });
+    } catch (e) {
+      print('Error initializing camera: $e');
+    }
   }
 
   Future<void> _captureImage() async {
-    if (_isDetecting) {
+    if (_isDetecting && _cameraInitialized) {
       try {
-        final canvas = html.CanvasElement(
-            width: _videoElement!.videoWidth,
-            height: _videoElement!.videoHeight);
-        final ctx = canvas.context2D;
-        ctx.drawImage(_videoElement!, 0, 0);
-        final blob = await canvas.toBlob('image/png');
-        final imageFile = html.File([blob], 'capture.png');
+        await _initializeControllerFuture;
+
+        final XFile file = await _controller!.takePicture();
+        final imageBytes = await file.readAsBytes();
+        final imageFile = html.File([imageBytes], 'capture.png');
 
         setState(() {
           _imageFiles.add(imageFile);
@@ -106,16 +113,31 @@ class _CameraPageState extends State<CameraPage> {
   }
 
   void _startDetecting() {
-    setState(() {
-      _isDetecting = true;
-    });
-    Timer.periodic(Duration(seconds: 1), (timer) {
-      if (!_isDetecting) {
-        timer.cancel();
-      } else {
-        _captureImage();
-      }
-    });
+    if (!_cameraInitialized) {
+      _initializeCamera().then((_) {
+        setState(() {
+          _isDetecting = true;
+        });
+        Timer.periodic(Duration(seconds: 1), (timer) {
+          if (!_isDetecting) {
+            timer.cancel();
+          } else {
+            _captureImage();
+          }
+        });
+      });
+    } else {
+      setState(() {
+        _isDetecting = true;
+      });
+      Timer.periodic(Duration(seconds: 1), (timer) {
+        if (!_isDetecting) {
+          timer.cancel();
+        } else {
+          _captureImage();
+        }
+      });
+    }
   }
 
   void _stopDetecting() {
@@ -130,6 +152,12 @@ class _CameraPageState extends State<CameraPage> {
     await reader.onLoad.first;
     final Uint8List bytes = reader.result as Uint8List;
     return base64Encode(bytes);
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
   }
 
   @override
@@ -152,10 +180,20 @@ class _CameraPageState extends State<CameraPage> {
             onPressed: _isDetecting ? _stopDetecting : _startDetecting,
             child: Text(_isDetecting ? 'Stop Detecting' : 'Start Detecting'),
           ),
-          if (_videoElement != null)
-            Container(
-              child: HtmlElementView(viewType: 'videoElement'),
-              height: 300,
+          if (_cameraInitialized)
+            FutureBuilder<void>(
+              future: _initializeControllerFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  return CameraPreview(_controller!);
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error initializing camera: ${snapshot.error}'),
+                  );
+                } else {
+                  return Center(child: CircularProgressIndicator());
+                }
+              },
             ),
         ],
       ),

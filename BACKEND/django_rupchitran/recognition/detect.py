@@ -149,5 +149,4 @@ def recognize_faces(image_path):
         
     return recognized_face
     
-name = recognize_faces("D:\\ChitranRup\\BACKEND\\django_rupchitran\\recognition\\72a7434a-a991-4517-8c83-87ed5c20c83b.png")
 
