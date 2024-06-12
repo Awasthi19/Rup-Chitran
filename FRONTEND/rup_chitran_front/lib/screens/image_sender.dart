@@ -9,7 +9,7 @@ import 'package:rup_chitran_front/screens/login.dart';
 
 class CameraPage extends StatefulWidget {
   static String id = 'CameraPage';
-  CameraPage({ this.courseName}) {}
+  CameraPage({this.courseName}) {}
 
   final String? courseName;
 
@@ -24,6 +24,7 @@ class _CameraPageState extends State<CameraPage> {
   List<html.File> _queue = [];
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
+  Rect? _faceBoundingBox;
 
   Future<void> _initializeCamera() async {
     try {
@@ -96,6 +97,9 @@ class _CameraPageState extends State<CameraPage> {
         setState(() {
           _queue.remove(imageFile);
         });
+
+        // Process face detection
+        _detectFace();
       } else {
         print(
             'Image post failed with status: ${response.statusCode} for image: ${imageFile.name}');
@@ -103,6 +107,27 @@ class _CameraPageState extends State<CameraPage> {
     } catch (e) {
       print(
           'Image post failed with error: ${e.toString()} for image: ${imageFile.name}');
+    }
+  }
+
+  Future<void> _detectFace() async {
+    try {
+      final response = await http.get(Uri.parse('http://127.0.0.1:8000/face-detect/'));
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        setState(() {
+          _faceBoundingBox = Rect.fromLTWH(
+            responseData['x'],
+            responseData['y'],
+            responseData['width'],
+            responseData['height'],
+          );
+        });
+      } else {
+        print('Face detection failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Face detection failed with error: ${e.toString()}');
     }
   }
 
@@ -174,12 +199,8 @@ class _CameraPageState extends State<CameraPage> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          ElevatedButton(
-            onPressed: _isDetecting ? _stopDetecting : _startDetecting,
-            child: Text(_isDetecting ? 'Stop Detecting' : 'Start Detecting'),
-          ),
           if (_cameraInitialized)
             FutureBuilder<void>(
               future: _initializeControllerFuture,
@@ -195,8 +216,41 @@ class _CameraPageState extends State<CameraPage> {
                 }
               },
             ),
+          if (_faceBoundingBox != null)
+            CustomPaint(
+              painter: FacePainter(_faceBoundingBox!),
+            ),
+          Positioned(
+            bottom: 20,
+            left: 20,
+            child: ElevatedButton(
+              onPressed: _isDetecting ? _stopDetecting : _startDetecting,
+              child: Text(_isDetecting ? 'Stop Detecting' : 'Start Detecting'),
+            ),
+          ),
         ],
       ),
     );
+  }
+}
+
+class FacePainter extends CustomPainter {
+  final Rect faceBoundingBox;
+
+  FacePainter(this.faceBoundingBox);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    canvas.drawRect(faceBoundingBox, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
   }
 }
