@@ -129,6 +129,7 @@ def recognize_faces(image_path):
     gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
     faces = haarcascade.detectMultiScale(gray_img, 1.3, 5)
+    print(faces)
     for (x, y, w, h) in faces:
         img = rgb_img[y:y+h, x:x+w]
         img = cv.resize(img, (160, 160))
@@ -142,9 +143,11 @@ def recognize_faces(image_path):
             face_name = model.predict(ypred)
             final_name = encoder.inverse_transform(face_name)[0]
 
-        recognized_face.append({"emotion": final_name, "coordinates": {"x": x, "y": y, "w": w, "h": h}})
-        print(f"Detected emotion: {final_name} at coordinates: x={x}, y={y}, w={w}, h={h}")
+        recognized_face.append({"Name": final_name, "coordinates": {"x": x, "y": y, "w": w, "h": h}})
+        print(f"Detected Name: {final_name} at coordinates: x={x}, y={y}, w={w}, h={h}")
+        print(recognized_face)
         
     return recognized_face
     
-#name = recognize_faces("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
+name = recognize_faces("D:\\ChitranRup\\BACKEND\\django_rupchitran\\recognition\\72a7434a-a991-4517-8c83-87ed5c20c83b.png")
+

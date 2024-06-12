@@ -72,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
 
           // Navigate to the next page or show a success message
           // Navigator.pushNamed(context, CoursePage.id);
-          Navigator.pushNamed(context, CameraPage.id);
+          Navigator.pushNamed(context, CoursePage.id);
         } else {
           showErrorDialog(context,
               err: 'An unknown error occurred: Invalid response format');

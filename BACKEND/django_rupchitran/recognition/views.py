@@ -139,22 +139,34 @@ class FaceRecognitionView(APIView):
         
         def get(self, request):
             latest_image = Image.objects.latest('uploaded_at')
-            data = recognize_faces(latest_image.image.path)
-            return Response(data)
+            faces = recognize_faces(latest_image.image.path)
+            names = [face['Name'] for face in faces if face['Name'] != "unknown"]
+            course=request.data.get("course")
+            course = Course.objects.get(courseName=course)
+            today = datetime.date.today()
+            students = Student.objects.filter(studentName__in=names)
+            attendance, created = Attendance.objects.get_or_create(course=course, date=today)
+            attendance.students.add(*students)
+            attendance.Status = True
+            attendance.save()
+
+            return Response(faces)
         
 class EmotionRecognitionView(APIView):
      
      def get(self,request):
         latest_image = Image.objects.latest('uploaded_at')
-        data = recognize_emotion(latest_image.image.path)
-        return Response(data)
+        faces = recognize_emotion(latest_image.image.path)
+
+        return Response(faces)
           
         
 class CourseView(APIView):
 
     def post(self, request):
         
-        token = request.COOKIES.get('jwt')
+        #token = request.COOKIES.get('jwt')
+        token = request.headers.get('Authorization')
 
         if not token:
             return Response({'error': 'Not authenticated'}, status=401)
@@ -187,26 +199,28 @@ class CourseView(APIView):
 
   
     def get(self, request):
+        #token = request.COOKIES.get('jwt')
         token = request.headers.get('Authorization')
         print(token)
         if not token:
             return Response({'error': 'Not authenticated'}, status=401)
         
         try:
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         except jwt.ExpiredSignatureError:
             return Response({'error': 'Token expired'}, status=401)
         except jwt.InvalidTokenError:
             return Response({'error': 'Invalid token'}, status=401)
         print(token)
-        teacher = Teacher.objects.get(id=payload['id'])
-        teacher_id = teacher.id
-        courses = Course.objects.filter(teacher=teacher_id)
+        teacher_name = payload['teacherName']
+        teacher = Teacher.objects.get(teacherName=teacher_name)
+        courses = Course.objects.filter(teacher=teacher)
         data = []
         for course in courses:
             data.append({
                 'course_name': course.courseName,
             })
+        print(data)
         return Response({'courses': data}, status=200)
 
 

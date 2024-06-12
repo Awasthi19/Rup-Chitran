@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:rup_chitran_front/screens/image_sender.dart';
-import 'package:rup_chitran_front/screens/login.dart'; // Ensure this import exists
+import 'package:rup_chitran_front/screens/login.dart';
 import 'package:rup_chitran_front/screens/student.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,6 +48,7 @@ class _CoursePageState extends State<CoursePage> {
       );
 
       if (response.statusCode == 200) {
+        // Change this from 201 to 200
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         setState(() {
           _courses = responseBody['courses'];
@@ -92,12 +93,25 @@ class _CoursePageState extends State<CoursePage> {
                       EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                   child: ElevatedButton(
                     onPressed: () {
+                      String courseName = _courses[index][
+                          'course_name']; // Change 'courseName' to 'course_name'
                       if (kIsWeb) {
-                        Navigator.pushNamed(context, CameraPage.id);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                CameraPage(courseName: courseName),
+                          ),
+                        );
                         print('Running on the web');
                       } else {
                         if (Platform.isAndroid) {
-                          Navigator.pushNamed(context, Student.id);
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => Student(
+                                        courseName: courseName,
+                                      )));
                           print('Running on Android');
                         } else if (Platform.isIOS) {
                           print('Running on iOS');
@@ -115,14 +129,16 @@ class _CoursePageState extends State<CoursePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _courses[index]['courseName'],
+                            _courses[index][
+                                'course_name'], // Change 'courseName' to 'course_name'
                             style: TextStyle(fontSize: 20.0),
                           ),
-                          SizedBox(height: 8.0),
-                          Text(
-                            'Teacher ID: ${_courses[index]['teacherId']}',
-                            style: TextStyle(fontSize: 16.0),
-                          ),
+                          // If there's no teacherId in the response, you can remove the following lines
+                          // SizedBox(height: 8.0),
+                          // Text(
+                          //   'Teacher ID: ${_courses[index]['teacherId']}',
+                          //   style: TextStyle(fontSize: 16.0),
+                          // ),
                         ],
                       ),
                     ),

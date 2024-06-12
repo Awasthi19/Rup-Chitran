@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class Student extends StatefulWidget {
-  static String id='Student';
+  static String id = 'Student';
+
+  final String? courseName;
+  Student({this.courseName});
 
   @override
   State<Student> createState() => _StudentState();
@@ -68,12 +71,16 @@ class _StudentState extends State<Student> {
 
   Future<void> _postImage(String imagePath) async {
     try {
-      final uri = Uri.parse('YOUR_IMAGE_POST_URL_HERE');
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt');
+      final uri = Uri.parse('http://127.0.0.1:8000/image/');
       final request = http.MultipartRequest('POST', uri)
-        ..files.add(await http.MultipartFile.fromPath('image', imagePath));
+        ..headers['Authorization'] = '$token'
+        ..files.add(await http.MultipartFile.fromPath('image', imagePath))
+        ..fields['course'] = widget.courseName ?? '';
 
       final response = await request.send();
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         print('Image posted successfully: $imagePath');
         setState(() {
           _queue.remove(imagePath);

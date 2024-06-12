@@ -1,7 +1,6 @@
 import React from 'react'
 import Cam from '@/components/cam'
-import GetPost from '@/components/getpost'
-import Card from '@/components/card'
+
 
 function Home() {
   return (

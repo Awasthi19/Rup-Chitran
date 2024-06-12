@@ -8,6 +8,9 @@ import 'package:rup_chitran_front/screens/login.dart';
 
 class CameraPage extends StatefulWidget {
   static String id = 'CameraPage';
+  CameraPage({this.courseName}) {}
+
+  final String? courseName;
   @override
   _CameraPageState createState() => _CameraPageState();
 }
@@ -60,37 +63,41 @@ class _CameraPageState extends State<CameraPage> {
     }
   }
 
- Future<void> _postImage(html.File imageFile) async {
-  try {
-    final uri = Uri.parse('http://127.0.0.1:8000/images/');
+  Future<void> _postImage(html.File imageFile) async {
+    try {
+      final uri = Uri.parse('http://127.0.0.1:8000/image/');
 
-    // Convert the image file to base64
-    String base64Image = await _convertToBase64(imageFile);
+      // Convert the image file to base64
+      String base64Image = await _convertToBase64(imageFile);
 
-    // Create the request body
-    var body = jsonEncode({'image': base64Image});
-
-    // Send the POST request
-    final response = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      // Both 200 and 201 are treated as success
-      print('Image posted successfully: ${imageFile.name}');
-      setState(() {
-        _queue.remove(imageFile);
+      // Create the request body
+      var body = jsonEncode({
+        'image': base64Image,
+        'course': widget.courseName,
       });
-    } else {
+
+      // Send the POST request
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Both 200 and 201 are treated as success
+        print('Image posted successfully: ${imageFile.name}');
+        setState(() {
+          _queue.remove(imageFile);
+        });
+      } else {
+        print(
+            'Image post failed with status: ${response.statusCode} for image: ${imageFile.name}');
+      }
+    } catch (e) {
       print(
-          'Image post failed with status: ${response.statusCode} for image: ${imageFile.name}');
+          'Image post failed with error: ${e.toString()} for image: ${imageFile.name}');
     }
-  } catch (e) {
-    print('Image post failed with error: ${e.toString()} for image: ${imageFile.name}');
   }
-}
 
   void _processQueue() {
     for (var imageFile in _queue) {
