@@ -127,7 +127,7 @@ class _EmotionPageState extends State<EmotionPage> {
                   double.parse(faceData['coordinates']['w'].toString()),
                   double.parse(faceData['coordinates']['h'].toString()),
                 ));
-                _detectedNames.add(faceData['Name']);
+                _detectedNames.add(faceData['emotion']);
               }
             }
           });
