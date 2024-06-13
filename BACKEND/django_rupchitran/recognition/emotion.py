@@ -108,8 +108,9 @@ def recognize_emotion(image_path):
         
     return recognized_emotion
 
+""""
 name = recognize_emotion("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
 name = recognize_emotion("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
 name = recognize_emotion("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
 name = recognize_emotion("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
-
+"""
