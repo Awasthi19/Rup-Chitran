@@ -9,7 +9,7 @@ import 'package:rup_chitran_front/screens/login.dart';
 
 class CameraPage extends StatefulWidget {
   static String id = 'CameraPage';
-  CameraPage({this.courseName}) {}
+  CameraPage({this.courseName});
 
   final String? courseName;
 
@@ -24,7 +24,8 @@ class _CameraPageState extends State<CameraPage> {
   List<html.File> _queue = [];
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
-  Rect? _faceBoundingBox;
+  List<Rect> _faceBoundingBoxes = [];
+  List<String?> _detectedNames = [];
 
   Future<void> _initializeCamera() async {
     try {
@@ -99,7 +100,7 @@ class _CameraPageState extends State<CameraPage> {
         });
 
         // Process face detection
-        _detectFace();
+        _detectFaces(response.body);
       } else {
         print(
             'Image post failed with status: ${response.statusCode} for image: ${imageFile.name}');
@@ -110,21 +111,40 @@ class _CameraPageState extends State<CameraPage> {
     }
   }
 
-  Future<void> _detectFace() async {
+  Future<void> _detectFaces(String responseBody) async {
     try {
-      final response = await http.get(Uri.parse('http://127.0.0.1:8000/face-detect/'));
+      final response =
+          await http.get(Uri.parse('http://127.0.0.1:8000/recognize_face/'));
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        setState(() {
-          _faceBoundingBox = Rect.fromLTWH(
-            responseData['x'],
-            responseData['y'],
-            responseData['width'],
-            responseData['height'],
-          );
-        });
-      } else {
-        print('Face detection failed with status: ${response.statusCode}');
+
+        if (responseData.isNotEmpty && responseData[0] != null) {
+          setState(() {
+            _faceBoundingBoxes = [];
+            _detectedNames = [];
+            for (var faceData in responseData) {
+              if (faceData['coordinates'] != null) {
+                _faceBoundingBoxes.add(Rect.fromLTWH(
+                  double.parse(faceData['coordinates']['x'].toString()),
+                  double.parse(faceData['coordinates']['y'].toString()),
+                  double.parse(faceData['coordinates']['w'].toString()),
+                  double.parse(faceData['coordinates']['h'].toString()),
+                ));
+                _detectedNames.add(faceData['Name']);
+              }
+            }
+          });
+
+          // Remove the bounding boxes and names after a second
+          Future.delayed(Duration(seconds: 1), () {
+            setState(() {
+              _faceBoundingBoxes = [];
+              _detectedNames = [];
+            });
+          });
+        } else {
+          print('No valid face data received');
+        }
       }
     } catch (e) {
       print('Face detection failed with error: ${e.toString()}');
@@ -132,8 +152,8 @@ class _CameraPageState extends State<CameraPage> {
   }
 
   void _processQueue() {
-    for (var imageFile in _queue) {
-      _postImage(imageFile);
+    if (_queue.isNotEmpty) {
+      _postImage(_queue.first);
     }
   }
 
@@ -216,9 +236,9 @@ class _CameraPageState extends State<CameraPage> {
                 }
               },
             ),
-          if (_faceBoundingBox != null)
+          if (_faceBoundingBoxes.isNotEmpty)
             CustomPaint(
-              painter: FacePainter(_faceBoundingBox!),
+              painter: FacePainter(_faceBoundingBoxes, _detectedNames),
             ),
           Positioned(
             bottom: 20,
@@ -235,9 +255,10 @@ class _CameraPageState extends State<CameraPage> {
 }
 
 class FacePainter extends CustomPainter {
-  final Rect faceBoundingBox;
+  final List<Rect> faceBoundingBoxes;
+  final List<String?> names;
 
-  FacePainter(this.faceBoundingBox);
+  FacePainter(this.faceBoundingBoxes, this.names);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -246,7 +267,27 @@ class FacePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
-    canvas.drawRect(faceBoundingBox, paint);
+    for (int i = 0; i < faceBoundingBoxes.length; i++) {
+      // Draw the bounding box
+      canvas.drawRect(faceBoundingBoxes[i], paint);
+
+      // Draw the name above the bounding box
+      if (names[i] != null) {
+        final textSpan = TextSpan(
+          text: names[i],
+          style: TextStyle(color: Colors.red, fontSize: 20.0),
+        );
+        final textPainter = TextPainter(
+          text: textSpan,
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
+        textPainter.paint(
+            canvas,
+            Offset(faceBoundingBoxes[i].left,
+                faceBoundingBoxes[i].top - textPainter.height));
+      }
+    }
   }
 
   @override

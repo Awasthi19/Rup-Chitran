@@ -138,9 +138,10 @@ class ImageViewSet(ModelViewSet):
 class FaceRecognitionView(APIView):
         
         def get(self, request):
+            print("faceRecognition")
             latest_image = Image.objects.latest('uploaded_at')
             faces = recognize_faces(latest_image.image.path)
-            names = [face['Name'] for face in faces if face['Name'] != "unknown"]
+            """names = [face['Name'] for face in faces if face['Name'] != "unknown"]
             course=request.data.get("course")
             course = Course.objects.get(courseName=course)
             today = datetime.date.today()
@@ -149,7 +150,7 @@ class FaceRecognitionView(APIView):
             attendance.students.add(*students)
             attendance.Status = True
             attendance.save()
-
+            """
             return Response(faces)
         
 class EmotionRecognitionView(APIView):

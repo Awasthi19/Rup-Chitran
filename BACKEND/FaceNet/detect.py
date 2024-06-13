@@ -10,9 +10,18 @@ import cv2 as cv
 from keras_facenet import FaceNet
 
 
+facenet = FaceNet()
 
+# Define paths
+script_dir = os.path.dirname(os.path.abspath(__file__))
+cascade_file_path = os.path.join(script_dir, 'haarcascade_frontalface_default.xml')
+facenet_file_path = os.path.join(script_dir, 'faces_embeddings_done_4classes.npz')
+svm_file_path = os.path.join(script_dir, 'svm_model_160x160.pkl')
 
-"""
+# Load embeddings and labels
+if not os.path.exists(facenet_file_path):
+    print(f"Error: File '{facenet_file_path}' not found.")
+    exit()
 
 # Initialize video capture (0 for built-in webcam, 1 for external)
 camera_index = 0  # Try with built-in camera first
@@ -20,6 +29,22 @@ cap = cv.VideoCapture(camera_index)
 if not cap.isOpened():
     print("Error: Could not open video stream.")
     exit()
+
+faces_embeddings = np.load(facenet_file_path)
+X = faces_embeddings['arr_0']
+Y = faces_embeddings['arr_1']
+encoder = LabelEncoder()
+encoder.fit(Y)
+# Load Haar cascade for face detection
+if not os.path.exists(cascade_file_path):
+    print(f"Error: File '{cascade_file_path}' not found.")
+    exit()
+haarcascade = cv.CascadeClassifier(cascade_file_path)
+# Load pre-trained SVM model
+if not os.path.exists(svm_file_path):
+    print(f"Error: File '{svm_file_path}' not found.")
+    exit()
+model = pickle.load(open(svm_file_path, 'rb'))
 
 # Set the distance threshold
 threshold = 0.6
@@ -81,9 +106,9 @@ finally:
     # Release resources
     cap.release()
     cv.destroyAllWindows()
+
+
 """
-
-
 def recognize_faces(image_path):
     global recognized_face
     recognized_face = []
@@ -148,3 +173,4 @@ def recognize_faces(image_path):
     return recognized_face
     
 name = recognize_faces("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
+"""
