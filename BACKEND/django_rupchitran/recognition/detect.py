@@ -2,87 +2,12 @@
 import numpy as np
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import tensorflow as tf
+#import tensorflow as tf
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
 import pickle
 import cv2 as cv
 from keras_facenet import FaceNet
-
-
-
-
-"""
-
-# Initialize video capture (0 for built-in webcam, 1 for external)
-camera_index = 0  # Try with built-in camera first
-cap = cv.VideoCapture(camera_index)
-if not cap.isOpened():
-    print("Error: Could not open video stream.")
-    exit()
-
-# Set the distance threshold
-threshold = 0.6
-
-# Main loop
-try:
-    while cap.isOpened():
-        # Read a frame from the video capture
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: Could not read frame.")
-            break
-
-        # Convert frame to RGB and grayscale
-        rgb_img = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-        gray_img = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-
-        # Detect faces
-        faces = haarcascade.detectMultiScale(gray_img, 1.3, 5)
-
-        for (x, y, w, h) in faces:
-            # Extract the face region
-            img = rgb_img[y:y+h, x:x+w]
-            img = cv.resize(img, (160, 160))  # Resize to 160x160
-
-            # Expand dimensions to match model input
-            img = np.expand_dims(img, axis=0)
-
-            # Get embeddings
-            ypred = facenet.embeddings(img)
-
-            # Calculate cosine similarity with known faces
-            similarities = cosine_similarity(ypred, X)
-            max_similarity = np.max(similarities)
-
-            # Determine if the face is "unknown"
-            if max_similarity < threshold:
-                final_name = "unknown"
-            else:
-                face_name = model.predict(ypred)
-                final_name = encoder.inverse_transform(face_name)[0]
-
-            # Print the face name in the terminal
-            print(f"Detected face: {final_name}")
-
-            # Draw rectangle and put text on the frame
-            cv.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 255), 2)
-            cv.putText(frame, str(final_name), (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv.LINE_AA)
-
-        # Display the frame
-        cv.imshow("Face Recognition", frame)
-
-        # Exit on 'q' key press
-        if cv.waitKey(1) & 0xFF == ord('q'):
-            break
-except Exception as e:
-    print(f"An error occurred: {e}")
-finally:
-    # Release resources
-    cap.release()
-    cv.destroyAllWindows()
-"""
-
 
 def recognize_faces(image_path):
     global recognized_face
@@ -149,5 +74,6 @@ def recognize_faces(image_path):
         
     return recognized_face
     
+name = recognize_faces("D:\\ChitranRup\\BACKEND\\django_rupchitran\\recognition\\72a7434a-a991-4517-8c83-87ed5c20c83b.png")
 name = recognize_faces("D:\\ChitranRup\\BACKEND\\django_rupchitran\\recognition\\72a7434a-a991-4517-8c83-87ed5c20c83b.png")
 

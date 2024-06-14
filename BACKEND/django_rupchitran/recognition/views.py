@@ -140,7 +140,7 @@ class FaceRecognitionView(APIView):
         def get(self, request):
             latest_image = Image.objects.latest('uploaded_at')
             faces = recognize_faces(latest_image.image.path)
-            names = [face['Name'] for face in faces if face['Name'] != "unknown"]
+            """names = [face['Name'] for face in faces if face['Name'] != "unknown"]
             course=request.data.get("course")
             course = Course.objects.get(courseName=course)
             today = datetime.date.today()
@@ -148,7 +148,7 @@ class FaceRecognitionView(APIView):
             attendance, created = Attendance.objects.get_or_create(course=course, date=today)
             attendance.students.add(*students)
             attendance.Status = True
-            attendance.save()
+            attendance.save()"""
 
             return Response(faces)
         
