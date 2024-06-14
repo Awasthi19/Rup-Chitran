@@ -244,8 +244,8 @@ class CourseView(APIView):
 
   
     def get(self, request):
-        token = request.COOKIES.get('jwt')
-        #token = request.headers.get('Authorization')
+        #token = request.COOKIES.get('jwt')
+        token = request.headers.get('Authorization')
         print(token)
         if not token:
             return Response({'error': 'Not authenticated'}, status=401)

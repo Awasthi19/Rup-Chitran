@@ -82,7 +82,6 @@ class _CameraPageState extends State<CameraPage> {
       // Create the request body
       var body = jsonEncode({
         'image': base64Image,
-        'course': widget.courseName,
       });
 
       // Send the POST request
@@ -113,8 +112,12 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<void> _detectFaces(String responseBody) async {
     try {
-      final response =
-          await http.get(Uri.parse('http://127.0.0.1:8000/recognize_face/'));
+      var url = Uri.http('127.0.0.1:8000', 'recognize_face');
+      var body = jsonEncode({'course': widget.courseName});
+
+      final response = await http.post(url,
+          headers: {'Content-Type': 'application/json'}, body: body);
+
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
 
@@ -131,6 +134,9 @@ class _CameraPageState extends State<CameraPage> {
                   double.parse(faceData['coordinates']['h'].toString()),
                 ));
                 _detectedNames.add(faceData['Name']);
+              }
+              if (faceData.containsKey('Status')) {
+                _detectedNames.add(faceData['Status']);
               }
             }
           });
@@ -286,6 +292,23 @@ class FacePainter extends CustomPainter {
             canvas,
             Offset(faceBoundingBoxes[i].left,
                 faceBoundingBoxes[i].top - textPainter.height));
+
+        // Draw the status below the bounding box
+        if (i < names.length && names[i] != null) {
+          final statusTextSpan = TextSpan(
+            text: names[i],
+            style: TextStyle(color: Colors.red, fontSize: 16.0),
+          );
+          final statusTextPainter = TextPainter(
+            text: statusTextSpan,
+            textDirection: TextDirection.ltr,
+          );
+          statusTextPainter.layout();
+          statusTextPainter.paint(
+              canvas,
+              Offset(
+                  faceBoundingBoxes[i].left, faceBoundingBoxes[i].bottom + 2));
+        }
       }
     }
   }

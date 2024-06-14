@@ -206,7 +206,7 @@ class _EmotionPageState extends State<EmotionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Camera Page'),
+        title: Text('Emotion Gauge'),
         actions: [
           IconButton(
             icon: Icon(Icons.arrow_forward),
