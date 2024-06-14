@@ -34,5 +34,11 @@ class Attendance(models.Model):
     Status = models.BooleanField(default=False)
     def __str__(self):
         return self.course.courseName + ' ' + str(self.date)
+    
+class Detection(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    first_detected = models.DateTimeField()
+    last_detected = models.DateTimeField()
 
     

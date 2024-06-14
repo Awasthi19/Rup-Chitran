@@ -137,21 +137,40 @@ class ImageViewSet(ModelViewSet):
 
 class FaceRecognitionView(APIView):
         
-        def get(self, request):
-            print("faceRecognition")
-            latest_image = Image.objects.latest('uploaded_at')
-            faces = recognize_faces(latest_image.image.path)
-            """names = [face['Name'] for face in faces if face['Name'] != "unknown"]
-            course=request.data.get("course")
-            course = Course.objects.get(courseName=course)
-            today = datetime.date.today()
-            students = Student.objects.filter(studentName__in=names)
-            attendance, created = Attendance.objects.get_or_create(course=course, date=today)
-            attendance.students.add(*students)
-            attendance.Status = True
-            attendance.save()
-            """
-            return Response(faces)
+    def get(self, request):
+        print("faceRecognition")
+        latest_image = Image.objects.latest('uploaded_at')
+        faces = recognize_faces(latest_image.image.path)
+        names = [face['Name'] for face in faces if face['Name'] != "unknown"]
+        course_name = request.data.get("course")
+        print(course_name)
+        course = Course.objects.get(courseName=course_name)
+        today = datetime.date.today()
+        current_time = datetime.datetime.now()
+        
+        students = Student.objects.filter(studentName__in=names)
+        studentInCourse = course.students.filter(studentName__in=names)
+
+        for student in studentInCourse:
+            detection, created = Detection.objects.get_or_create(
+                student=student, 
+                course=course,
+                defaults={'first_detected': current_time, 'last_detected': current_time}
+            )
+            
+            if not created:
+                detection.last_detected = current_time
+                detection.save()
+                
+            # Check if the duration between first and last detection is more than an hour
+            if detection.last_detected - detection.first_detected >= datetime.timedelta(hours=1):
+                attendance, created = Attendance.objects.get_or_create(course=course, date=today)
+                attendance.students.add(student)
+                attendance.Status = True
+                attendance.save()
+                faces.append({'Status': 'Present'})
+        
+        return Response(faces)
         
 class EmotionRecognitionView(APIView):
      
@@ -160,12 +179,37 @@ class EmotionRecognitionView(APIView):
         faces = recognize_emotion(latest_image.image.path)
 
         return Response(faces)
+     
+class StudentView(APIView):
+        
+    def post(self, request):
+        student_name = request.data.get('studentName')
+        roll_no = request.data.get('rollNo')
+        course_name = request.data.get('courseName')
+        if not student_name or not roll_no or not course_name:
+            return Response({'error': 'Student name, roll number and course name are required'}, status=400)
+        
+        course = Course.objects.get(courseName=course_name)
+        student,created = Student.objects.get_or_create(studentName=student_name, rollNo=roll_no)
+        course.students.add(student)
+        return Response({'message': 'Student added successfully'}, status=201)
+    
+    def get(self, request):
+        course_name = request.GET.get('courseName')
+        course = Course.objects.get(courseName=course_name)
+        students = course.students.all()
+        data = []
+        for student in students:
+            data.append({
+                'student_name': student.studentName,
+                'roll_no': student.rollNo
+            })
+        return Response({'students': data}, status=200)
           
         
 class CourseView(APIView):
 
     def post(self, request):
-        
         #token = request.COOKIES.get('jwt')
         token = request.headers.get('Authorization')
 
@@ -200,8 +244,8 @@ class CourseView(APIView):
 
   
     def get(self, request):
-        #token = request.COOKIES.get('jwt')
-        token = request.headers.get('Authorization')
+        token = request.COOKIES.get('jwt')
+        #token = request.headers.get('Authorization')
         print(token)
         if not token:
             return Response({'error': 'Not authenticated'}, status=401)
@@ -223,6 +267,32 @@ class CourseView(APIView):
             })
         print(data)
         return Response({'courses': data}, status=200)
+    
+    def delete(self, request):
+        #token = request.COOKIES.get('jwt')
+        token = request.headers.get('Authorization')
+        if not token:
+            return Response({'error': 'Not authenticated'}, status=401)
+        
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return Response({'error': 'Token expired'}, status=401)
+        except jwt.InvalidTokenError:
+            return Response({'error': 'Invalid token'}, status=401)
+        
+        teacher_name = payload['teacherName']
+        teacher = Teacher.objects.get(teacherName=teacher_name)
+        course_name = request.data.get('courseName')
+        if not course_name:
+            return Response({'error': 'Course name is required'}, status=400)
+        
+        try:
+            course = Course.objects.get(courseName=course_name, teacher=teacher)
+            course.delete()
+            return Response({'message': 'Course deleted successfully'}, status=200)
+        except Course.DoesNotExist:
+            return Response({'error': 'Course not found'}, status=404)
 
 
 class TeacherCourseStudentView(APIView):
