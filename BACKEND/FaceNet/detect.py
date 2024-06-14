@@ -1,4 +1,3 @@
-# Import the modules
 import numpy as np
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -9,6 +8,12 @@ import pickle
 import cv2 as cv
 from keras_facenet import FaceNet
 
+facenet = FaceNet()
+# Define paths
+script_dir = os.path.dirname(os.path.abspath(__file__))
+cascade_file_path = os.path.join(script_dir, 'haarcascade_frontalface_default.xml')
+facenet_file_path = os.path.join(script_dir, 'faces_embeddings_done_4classes.npz')
+svm_file_path = os.path.join(script_dir, 'svm_model_160x160.pkl')
 
 facenet = FaceNet()
 
@@ -25,7 +30,7 @@ if not os.path.exists(facenet_file_path):
 
 # Initialize video capture (0 for built-in webcam, 1 for external)
 camera_index = 0  # Try with built-in camera first
-cap = cv.VideoCapture(camera_index)
+cap = cv.VideoCapture(camera_index, cv.CAP_DSHOW)  # Use DirectShow backend
 if not cap.isOpened():
     print("Error: Could not open video stream.")
     exit()

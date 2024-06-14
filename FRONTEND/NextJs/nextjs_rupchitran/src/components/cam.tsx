@@ -74,11 +74,12 @@ function Cam() {
 			console.log(response_data);
 			
 			setFaceBoundingBox({
-				x: response_data.x,
-				y: response_data.y,
-				width: response_data.width,
-				height: response_data.height
+				x: response_data[0].coordinates.x,
+				y: response_data[0].coordinates.y,
+				width: response_data[0].coordinates.w,
+				height: response_data[0].coordinates.h
 			})
+			console.log(faceBoundingBox);
 			
       	}
       	catch(error){
