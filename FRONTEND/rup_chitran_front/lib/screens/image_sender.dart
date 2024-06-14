@@ -26,7 +26,7 @@ class _CameraPageState extends State<CameraPage> {
   Future<void>? _initializeControllerFuture;
   List<Rect> _faceBoundingBoxes = [];
   List<String?> _detectedNames = [];
-
+  List<String?> _detectedStatuses = [];
 
   Future<void> _initializeCamera() async {
     try {
@@ -137,7 +137,9 @@ class _CameraPageState extends State<CameraPage> {
                 _detectedNames.add(faceData['Name']);
               }
               if (faceData.containsKey('Status')) {
-                _detectedNames.add(faceData['Status']);
+                _detectedStatuses.add(faceData['Status']);
+              } else {
+                _detectedStatuses.add(null);
               }
             }
           });
@@ -245,7 +247,7 @@ class _CameraPageState extends State<CameraPage> {
             ),
           if (_faceBoundingBoxes.isNotEmpty)
             CustomPaint(
-              painter: FacePainter(_faceBoundingBoxes, _detectedNames),
+              painter: FacePainter(_faceBoundingBoxes, _detectedNames,_detectedStatuses),
             ),
           Positioned(
             bottom: 20,
@@ -264,8 +266,9 @@ class _CameraPageState extends State<CameraPage> {
 class FacePainter extends CustomPainter {
   final List<Rect> faceBoundingBoxes;
   final List<String?> names;
+  final List<String?> statuses;
 
-  FacePainter(this.faceBoundingBoxes, this.names);
+  FacePainter(this.faceBoundingBoxes, this.names,this.statuses);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -295,10 +298,10 @@ class FacePainter extends CustomPainter {
                 faceBoundingBoxes[i].top - textPainter.height));
 
         // Draw the status below the bounding box
-        if (i < names.length && names[i] != null) {
+        if (i < statuses.length && statuses[i] != null) {
           final statusTextSpan = TextSpan(
-            text: names[i],
-            style: TextStyle(color: Colors.red, fontSize: 16.0),
+            text: statuses[i],
+            style: TextStyle(color: Colors.green, fontSize: 16.0),
           );
           final statusTextPainter = TextPainter(
             text: statusTextSpan,
