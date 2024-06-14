@@ -5,14 +5,18 @@ import numpy as np
 import cv2 as cv
 import os
 
+custom_model = None
+
 def LoadModel():
-    script_dir = os.path.dirname(__file__)
-    model_path = os.path.join(script_dir, 'Emotion_Recognizer')
-    input_shape = (48, 48, 1) 
-    inputs = keras.Input(shape=input_shape)
-    
-    outputs = TFSMLayer(model_path, call_endpoint='serving_default')(inputs)  
-    custom_model = keras.Model(inputs, outputs)
+    global custom_model
+    if custom_model is None:
+        script_dir = os.path.dirname(__file__)
+        model_path = os.path.join(script_dir, 'Emotion_Recognizer')
+        input_shape = (48, 48, 1) 
+        inputs = keras.Input(shape=input_shape)
+
+        outputs = TFSMLayer(model_path, call_endpoint='serving_default')(inputs)  
+        custom_model = keras.Model(inputs, outputs)
     return custom_model
 
 def preprocess_image(face_img):
@@ -100,9 +104,13 @@ def recognize_emotion(image_path):
         face_img = img[y:y+h, x:x+w]
         emotion = predict_emotion(face_img)
         recognized_emotion.append({"emotion": emotion, "coordinates": {"x": x, "y": y, "w": w, "h": h}})
-        print(f"Detected emotion: {emotion} at coordinates: x={x}, y={y}, w={w}, h={h}")
+        print(recognized_emotion)
         
     return recognized_emotion
 
-#name = recognize_emotion("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
-
+""""
+name = recognize_emotion("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
+name = recognize_emotion("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
+name = recognize_emotion("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
+name = recognize_emotion("C:\\Users\\Swarnim Bajracharya\\Downloads\\Suhsil A\\IMG_3590.jpg")
+"""

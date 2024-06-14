@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rup_chitran_front/screens/emotion.dart';
 import 'package:rup_chitran_front/screens/login.dart';
 import 'package:rup_chitran_front/screens/signup.dart';
 import 'package:animate_do/animate_do.dart';
@@ -11,9 +12,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   void initState() {
-  
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,34 +81,68 @@ class _HomePageState extends State<HomePage> {
                     height: 20,
                   ),
                   FadeInUp(
-                      duration: Duration(milliseconds: 1600),
+                    duration: Duration(milliseconds: 1600),
+                    child: Container(
+                      padding: EdgeInsets.only(top: 3, left: 3),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border(
+                            bottom: BorderSide(color: Colors.black),
+                            top: BorderSide(color: Colors.black),
+                            left: BorderSide(color: Colors.black),
+                            right: BorderSide(color: Colors.black),
+                          )),
+                      child: MaterialButton(
+                        minWidth: double.infinity,
+                        height: 60,
+                        onPressed: () {
+                          Navigator.pushNamed(context, SignupPage.id);
+                        },
+                        color: Colors.yellow,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50)),
+                        child: Text(
+                          "Sign up",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 18),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  FadeInUp(
+                      duration: Duration(milliseconds: 1700),
                       child: Container(
                         padding: EdgeInsets.only(top: 3, left: 3),
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(50),
-                            border: Border(
-                              bottom: BorderSide(color: Colors.black),
-                              top: BorderSide(color: Colors.black),
-                              left: BorderSide(color: Colors.black),
-                              right: BorderSide(color: Colors.black),
-                            )),
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border(
+                            bottom: BorderSide(color: Colors.black),
+                            top: BorderSide(color: Colors.black),
+                            left: BorderSide(color: Colors.black),
+                            right: BorderSide(color: Colors.black),
+                          ),
+                        ),
                         child: MaterialButton(
-                          minWidth: double.infinity,
-                          height: 60,
-                          onPressed: () {
-                            Navigator.pushNamed(context, SignupPage.id);
-                          },
-                          color: Colors.yellow,
+                          color: Colors.green.shade200,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50)),
+                          minWidth: double.infinity,
+                          height: 60,
+                          onPressed: () {
+                            Navigator.pushNamed(context, EmotionPage.id);
+                          },
                           child: Text(
-                            "Sign up",
+                            "Emotion Gauge",
                             style: TextStyle(
                                 fontWeight: FontWeight.w600, fontSize: 18),
                           ),
                         ),
-                      ))
+                      )),
                 ],
               )
             ],
