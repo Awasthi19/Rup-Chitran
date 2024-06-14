@@ -13,6 +13,7 @@ import jwt
 from django.contrib.auth.hashers import make_password, check_password
 import datetime
 from django.conf import settings
+from django.utils import timezone
 
 class SignupView(APIView):
     permission_classes = []
@@ -137,7 +138,7 @@ class ImageViewSet(ModelViewSet):
 
 class FaceRecognitionView(APIView):
         
-    def get(self, request):
+    def post(self, request):
         print("faceRecognition")
         latest_image = Image.objects.latest('uploaded_at')
         faces = recognize_faces(latest_image.image.path)
@@ -146,11 +147,11 @@ class FaceRecognitionView(APIView):
         print(course_name)
         course = Course.objects.get(courseName=course_name)
         today = datetime.date.today()
-        current_time = datetime.datetime.now()
+        current_time = timezone.now()
         
         students = Student.objects.filter(studentName__in=names)
         studentInCourse = course.students.filter(studentName__in=names)
-
+        print(studentInCourse)
         for student in studentInCourse:
             detection, created = Detection.objects.get_or_create(
                 student=student, 
