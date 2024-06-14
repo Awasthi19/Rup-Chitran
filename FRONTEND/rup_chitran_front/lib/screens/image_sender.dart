@@ -27,6 +27,7 @@ class _CameraPageState extends State<CameraPage> {
   List<Rect> _faceBoundingBoxes = [];
   List<String?> _detectedNames = [];
 
+
   Future<void> _initializeCamera() async {
     try {
       final cameras = await availableCameras();
@@ -112,7 +113,7 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<void> _detectFaces(String responseBody) async {
     try {
-      var url = Uri.http('127.0.0.1:8000', 'recognize_face');
+      final url = Uri.parse('http://127.0.0.1:8000/recognize_face/');
       var body = jsonEncode({'course': widget.courseName});
 
       final response = await http.post(url,

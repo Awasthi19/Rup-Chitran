@@ -97,11 +97,10 @@ def recognize_faces(image_path):
         
     return recognized_face
 
-"""
+
 # Example usage
-name = recognize_faces("D:\\Rup-Chitran\\BACKEND\\django_rupchitran\\recognition\\72a7434a-a991-4517-8c83-87ed5c20c83b.png")
-name = recognize_faces("D:\\Rup-Chitran\\BACKEND\\django_rupchitran\\recognition\\72a7434a-a991-4517-8c83-87ed5c20c83b.png")
-"""
+name = recognize_faces("D:\\ChitranRup\\BACKEND\\django_rupchitran\\recognition\\0b7d551e-4634-4eab-b54a-7adfcf23c184.jpg")
+
 
 
 """

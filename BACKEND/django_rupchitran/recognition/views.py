@@ -136,7 +136,9 @@ class ImageViewSet(ModelViewSet):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
 
-class FaceRecognitionView(APIView):
+class faceRecognitionView(APIView):
+    permission_classes = []
+    authentication_classes = []
         
     def post(self, request):
         print("faceRecognition")
@@ -164,7 +166,7 @@ class FaceRecognitionView(APIView):
                 detection.save()
                 
             # Check if the duration between first and last detection is more than an hour
-            if detection.last_detected - detection.first_detected >= datetime.timedelta(hours=1):
+            if detection.last_detected - detection.first_detected >= datetime.timedelta(seconds=3):
                 attendance, created = Attendance.objects.get_or_create(course=course, date=today)
                 attendance.students.add(student)
                 attendance.Status = True
